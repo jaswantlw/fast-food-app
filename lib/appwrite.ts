@@ -12,8 +12,8 @@ export const appwriteConfig = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
   platform: process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
-  databaseId: process.env.APPWRITE_DATABASE_ID!,
-  userCollectionId: process.env.APPWRITE_USER_COLLECTION_ID!,
+  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+  userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
 };
 
 export const client = new Client();
@@ -53,28 +53,35 @@ export const createUser = async ({
 
 export const signIn = async ({ email, password }: SignInParams) => {
   try {
-    const session = await account.createEmailPasswordSession(email, password);
+    await account.createEmailPasswordSession(email, password);
+    const user = await getCurrentUser();
+    console.log("Appwrite user:", user); // Debug log
+    return user;
   } catch (error) {
-    throw new Error(error as string);
+    console.error("Appwrite error:", error); // Debug log
+    throw error;
   }
 };
 
 export const getCurrentUser = async () => {
   try {
-    const currentAccount = await account.get();
-
-    if (!currentAccount) throw Error;
-
-    const currentUser = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.userCollectionId,
-      [Query.equal("accountId", currentAccount.$id)]
-    );
-
-    if (!currentUser) throw Error;
-
-    return currentUser.documents[0];
+    const user = await account.get();
+    console.log("getCurrentUser result:", user); // Debug log
+    return user;
   } catch (error) {
+    console.error("getCurrentUser error:", error); // Debug log
+    throw error;
+  }
+};
+
+export const logout = async () => {
+  try {
+    // Delete the current session (logs out only the logged-in device/session)
+    await account.deleteSession("current");
+    return true;
+  } catch (error) {
+    console.error("Logout error:", error);
     throw new Error(error as string);
   }
 };
+

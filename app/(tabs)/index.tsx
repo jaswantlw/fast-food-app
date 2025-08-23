@@ -1,5 +1,3 @@
-import CartButton from "@/components/CartButton";
-import { images, offers } from "@/constants";
 import cn from "clsx";
 import { Fragment } from "react";
 import {
@@ -12,14 +10,28 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import CartButton from "@/components/CartButton";
+import { images, offers } from "@/constants";
+import useAuthStore from "@/store/auth.store";
+import { logout } from "@/lib/appwrite";
+
 export default function Index() {
+  const { user, setUser, setIsAuthenticated } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  console.log("User: ", JSON.stringify(user, null, 2));
+
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* FlatList is equivalent to:
-        {
-          [].map((item) => (<div />))
-        }
-      */}
       <FlatList
         data={offers}
         renderItem={({ item, index }) => {
@@ -42,7 +54,7 @@ export default function Index() {
                         source={item.image}
                         className="size-full"
                         resizeMode="contain"
-                      ></Image>
+                      />
                     </View>
 
                     <View
@@ -59,7 +71,7 @@ export default function Index() {
                         tintColor={"#ffffff"}
                         resizeMode="contain"
                         source={images.arrowRight}
-                      ></Image>
+                      />
                     </View>
                   </Fragment>
                 )}
@@ -70,6 +82,7 @@ export default function Index() {
         contentContainerClassName="pb-28 px-5"
         ListHeaderComponent={() => (
           <View className="flex-between flex-row w-full my-5 px-5">
+            {/* Location section */}
             <View className="flex-start">
               <Text className="small-bold text-primary">DELIVER TO</Text>
               <TouchableOpacity className="flex-center flex-row gap-x-1 mt-0.5">
@@ -78,11 +91,22 @@ export default function Index() {
                   source={images.arrowDown}
                   className="size-3"
                   resizeMode="contain"
-                ></Image>
+                />
               </TouchableOpacity>
             </View>
 
-            <CartButton />
+            {/* Right side buttons (Cart + Logout) */}
+            <View className="flex-row items-center gap-x-4">
+              <CartButton />
+              <TouchableOpacity onPress={handleLogout}>
+                <Image
+                  source={images.logout} // 👈 add a logout icon to your `images` constants
+                  className="w-6 h-6"
+                  resizeMode="contain"
+                  tintColor={"#000"}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />

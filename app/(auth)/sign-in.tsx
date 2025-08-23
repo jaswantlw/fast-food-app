@@ -1,33 +1,51 @@
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
 import { signIn } from "@/lib/appwrite";
+import useAuthStore from "@/store/auth.store";
+import { User } from "@/type";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Text, View } from "react-native";
 
 const SignIn = () => {
+  const { setIsAuthenticated, setUser } = useAuthStore();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
   const submit = async () => {
-    const { email, password } = form;
+  const { email, password } = form;
 
-    if (!email || !password) {
-      return Alert.alert("Error", "Please enter credentials");
+  if (!email || !password) {
+    return Alert.alert("Error", "Please enter credentials");
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const user = await signIn({ email, password });
+    console.log("User from signIn:", user); // Debug log
+    
+    if (!user) {
+      throw new Error("No user data received");
     }
 
-    setIsSubmitting(true);
+    setUser(user);
+    setIsAuthenticated(true);
+    
+    // Add delay to ensure state is updated
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    console.log("Auth store state:", useAuthStore.getState()); // Debug log
+    router.replace("/(tabs)");
+  } catch (error: any) {
+    console.error("Sign in error:", error); // Debug log
+    Alert.alert("Error", error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-    try {
-      await signIn({email, password});
-
-      router.push("/");
-    } catch (error: any) {
-      Alert.alert("Error", error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
   return (
     <View className="gap-10 bg-white rounded-lg p-5 mt-5">
       <CustomInput

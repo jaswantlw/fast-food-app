@@ -1,7 +1,7 @@
-import CustomButton from "@/components/CustomButton";
-import CustomInput from "@/components/CustomInput";
 import { images } from "@/constants";
-import { Slot } from "expo-router";
+import useAuthStore from "@/store/auth.store";
+import { logout } from "@/lib/appwrite";
+import { Redirect, Slot } from "expo-router";
 import React from "react";
 import {
   Dimensions,
@@ -11,9 +11,24 @@ import {
   Platform,
   ScrollView,
   View,
+  Button,
 } from "react-native";
 
 export default function AuthLayout() {
+  const { isAuthenticated, setIsAuthenticated, setUser } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  if (isAuthenticated) return <Redirect href={"./"} />;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -21,7 +36,9 @@ export default function AuthLayout() {
       <ScrollView
         className="bg-white h-full"
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "space-between" }}
       >
+        {/* Top Section with graphics */}
         <View
           className="w-full relative"
           style={{ height: Dimensions.get("screen").height / 2.25 }}
@@ -38,8 +55,13 @@ export default function AuthLayout() {
           />
         </View>
 
-        
-      <Slot />
+        {/* Middle Slot (auth screens go here) */}
+        <Slot />
+
+        {/* Bottom Logout Button */}
+        <View className="p-4">
+          <Button title="Logout" color="red" onPress={handleLogout} />
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
